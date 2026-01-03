@@ -172,8 +172,6 @@ const isInCurrentWeek = (dateStr) => {
 const SettingsView = ({ targets, setTargets }) => {
     
     const handleExport = () => {
-        const data = localStorage.getItem('MyLifeApp_AllData') || JSON.stringify(localStorage); // Fallback for simple dump
-        // Better way: collect all keys used
         const keys = ['assignments', 'courses', 'jobs', 'inventory', 'calories', 'protein', 'water', 'favMeals', 'workouts', 'exerciseLibrary', 'weightLog', 'meals', 'schedule', 'transactions', 'targets'];
         const exportObj = {};
         keys.forEach(k => exportObj[k] = JSON.parse(localStorage.getItem(k)));
@@ -268,8 +266,6 @@ const SettingsView = ({ targets, setTargets }) => {
         </div>
     );
 };
-
-// ... UniversityView, BindingView, WalletView remain largely the same, minor cleanups ...
 
 // 1. UniversityView
 const UniversityView = ({ assignments, setAssignments, courses, setCourses, askConfirm }) => {
@@ -374,15 +370,20 @@ const UniversityView = ({ assignments, setAssignments, courses, setCourses, askC
                       </div>
                   </div>
               </Card>
+
+              {/* תיקון: עיצוב טופס ציונים למובייל */}
               <div>
                   <h3 className="font-bold text-slate-700 dark:text-slate-300 mb-3">הוסף קורס וציון</h3>
-                  <div className="flex gap-2 mb-4">
-                      <input placeholder="שם הקורס" className="p-2 rounded border bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white flex-1" value={gradeForm.name} onChange={e => setGradeForm({...gradeForm, name: e.target.value})} />
-                      <input type="number" placeholder="ציון" className="p-2 rounded border bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white w-20" value={gradeForm.grade} onChange={e => setGradeForm({...gradeForm, grade: e.target.value})} />
-                      <input type="number" placeholder="נ.ז" className="p-2 rounded border bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white w-16" value={gradeForm.credits} onChange={e => setGradeForm({...gradeForm, credits: e.target.value})} />
+                  <div className="grid gap-3 mb-4">
+                      <input placeholder="שם הקורס" className="p-2 rounded border bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white w-full" value={gradeForm.name} onChange={e => setGradeForm({...gradeForm, name: e.target.value})} />
+                      <div className="flex gap-2">
+                          <input type="number" placeholder="ציון" className="p-2 rounded border bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white w-1/2" value={gradeForm.grade} onChange={e => setGradeForm({...gradeForm, grade: e.target.value})} />
+                          <input type="number" placeholder="נ.ז" className="p-2 rounded border bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white w-1/2" value={gradeForm.credits} onChange={e => setGradeForm({...gradeForm, credits: e.target.value})} />
+                      </div>
+                      <Button onClick={handleGradeSubmit} className="w-full">שמור ציון</Button>
                   </div>
-                  <Button onClick={handleGradeSubmit} className="w-full">שמור ציון</Button>
               </div>
+
               <div className="space-y-2">
                   {courses.map(course => (
                       <div key={course.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg">
@@ -516,9 +517,9 @@ const BindingView = ({ jobs, setJobs, addTransaction, askConfirm, inventory, set
                     </div>
                     <input placeholder="סוג העבודה" className="p-2 rounded border dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={form.type} onChange={e => setForm({...form, type: e.target.value})} />
                     <div className="flex gap-2">
-                         <input type="number" placeholder="כמות" className="p-2 rounded border w-1/3 dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} />
-                         <input type="number" placeholder="מחיר (₪)" className="p-2 rounded border w-1/3 dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
-                         <input type="number" placeholder="עלות חומרים" className="p-2 rounded border w-1/3 dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={form.cost} onChange={e => setForm({...form, cost: e.target.value})} />
+                         <div className="w-1/3"><input type="number" placeholder="כמות" className="p-2 w-full rounded border dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} /></div>
+                         <div className="w-1/3"><input type="number" placeholder="מחיר" className="p-2 w-full rounded border dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={form.price} onChange={e => setForm({...form, price: e.target.value})} /></div>
+                         <div className="w-1/3"><input type="number" placeholder="עלות" className="p-2 w-full rounded border dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={form.cost} onChange={e => setForm({...form, cost: e.target.value})} /></div>
                     </div>
                     <Button onClick={handleSubmit}>{editingId ? "עדכן הזמנה" : "צור הזמנה"}</Button>
                 </div>
@@ -566,11 +567,15 @@ const BindingView = ({ jobs, setJobs, addTransaction, askConfirm, inventory, set
           </>
       ) : (
           <div className="space-y-4">
-              <div className="flex gap-2 mb-4">
-                  <input placeholder="שם פריט (למשל: דבק)" className="p-2 rounded border flex-1 dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={invForm.item} onChange={e => setInvForm({...invForm, item: e.target.value})} />
-                  <input type="number" placeholder="כמות" className="p-2 rounded border w-20 dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={invForm.qty} onChange={e => setInvForm({...invForm, qty: e.target.value})} />
-                  <Button onClick={handleAddInventory}>הוסף</Button>
+              {/* תיקון: עיצוב טופס ניהול מלאי למובייל */}
+              <div className="grid gap-3 mb-4">
+                  <input placeholder="שם פריט (למשל: דבק)" className="p-2 rounded border w-full dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={invForm.item} onChange={e => setInvForm({...invForm, item: e.target.value})} />
+                  <div className="flex gap-2">
+                      <input type="number" placeholder="כמות" className="p-2 rounded border w-24 dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={invForm.qty} onChange={e => setInvForm({...invForm, qty: e.target.value})} />
+                      <Button onClick={handleAddInventory} className="flex-1">הוסף</Button>
+                  </div>
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                   {inventory.map(item => (
                       <Card key={item.id} className="p-3 flex justify-between items-center bg-white dark:bg-slate-800">
@@ -604,8 +609,8 @@ const HealthView = ({
     weightLog, setWeightLog,
     targets
 }) => {
-  const [activeTab, setActiveTab] = useState('workout'); 
-  const [subTab, setSubTab] = useState('plan'); 
+  const [activeTab, setActiveTab] = useState('workout'); // workout | food | weight
+  const [subTab, setSubTab] = useState('plan'); // plan | library
   
   // Workouts State
   const [workoutForm, setWorkoutForm] = useState({ day: "ראשון", type: "" });
@@ -1140,7 +1145,7 @@ const HealthView = ({
   );
 };
 
-// 4. WalletView (ללא שינוי)
+// 4. WalletView
 const WalletView = ({ transactions, setTransactions, askConfirm }) => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [form, setForm] = useState({ title: "", amount: "", type: "income", date: new Date().toISOString().slice(0, 10) });
@@ -1250,7 +1255,7 @@ const WalletView = ({ transactions, setTransactions, askConfirm }) => {
 };
 
 // 5. Dashboard
-const Dashboard = ({ changeTab, schedule, setSchedule, assignments, jobs, calories, protein, workouts, askConfirm, transactions, targets }) => {
+const Dashboard = ({ changeTab, schedule, setSchedule, assignments, jobs, calories, targetCalories, protein, targetProtein, workouts, askConfirm, transactions, targets }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [formType, setFormType] = useState('meal'); 
@@ -1588,7 +1593,7 @@ export default function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <Dashboard changeTab={setActiveTab} schedule={schedule} setSchedule={setSchedule} assignments={assignments} jobs={jobs} calories={calories} protein={protein} workouts={workouts} askConfirm={askConfirm} transactions={transactions} targets={targets} />;
+      case 'dashboard': return <Dashboard changeTab={setActiveTab} schedule={schedule} setSchedule={setSchedule} assignments={assignments} jobs={jobs} calories={calories} targetCalories={targets.calories} protein={protein} targetProtein={targets.protein} workouts={workouts} askConfirm={askConfirm} transactions={transactions} targets={targets} />;
       case 'uni': return <UniversityView assignments={assignments} setAssignments={setAssignments} courses={courses} setCourses={setCourses} askConfirm={askConfirm} />;
       case 'binding': return <BindingView jobs={jobs} setJobs={setJobs} addTransaction={addTransaction} askConfirm={askConfirm} inventory={inventory} setInventory={setInventory} />;
       case 'health': return <HealthView 
