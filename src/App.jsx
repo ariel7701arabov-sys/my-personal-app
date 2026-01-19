@@ -6,7 +6,7 @@ import {
   AlertTriangle, AlertCircle, Moon, Sun, Droplets, Calculator, Archive, 
   Star, Package, History, ChevronDown, ChevronUp, Scale, List, RefreshCw, 
   Play, Pause, RotateCcw, SkipForward, BarChart3, Settings, Download, Upload,
-  Zap, BedDouble, Calendar, Timer
+  Calendar, Timer, LogOut
 } from 'lucide-react';
 
 // --- Hook לשמירה ב-LocalStorage ---
@@ -86,6 +86,7 @@ const Button = ({ children, onClick, variant = "primary", className = "", size =
     danger: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50",
     success: "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-200 dark:shadow-none",
     outline: "border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700",
+    dark: "bg-slate-800 text-white hover:bg-slate-700"
   };
   const sizes = { xs: "px-2 py-1 text-xs", sm: "px-3 py-1.5 text-sm", md: "px-4 py-2.5", lg: "px-6 py-3 text-lg" };
   return <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${sizes[size]} ${className}`}>{children}</button>;
@@ -119,7 +120,7 @@ const ConfirmModal = ({ isOpen, text, onConfirm, onCancel }) => {
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-sm scale-100 animate-in zoom-in-95 border dark:border-slate-700">
         <div className="flex flex-col items-center text-center gap-4">
           <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500"><AlertTriangle size={24} /></div>
-          <div><h3 className="text-lg font-bold text-slate-800 dark:text-white">למחוק?</h3><p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{text}</p></div>
+          <div><h3 className="text-lg font-bold text-slate-800 dark:text-white">למחוק פריט זה?</h3><p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{text}</p></div>
           <div className="flex gap-3 w-full mt-2"><Button className="flex-1" variant="secondary" onClick={onCancel}>ביטול</Button><Button className="flex-1" variant="danger" onClick={onConfirm}>כן, מחק</Button></div>
         </div>
       </div>
@@ -127,6 +128,7 @@ const ConfirmModal = ({ isOpen, text, onConfirm, onCancel }) => {
   );
 };
 
+// --- Helper Functions ---
 const isInCurrentWeek = (dateStr) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
@@ -191,12 +193,13 @@ const SettingsView = ({ targets, setTargets }) => {
 
     return (
         <div className="space-y-6 animate-in fade-in">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">הגדרות Ottermode</h2>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">הגדרות</h2>
             <Card className="p-4 bg-white dark:bg-slate-800">
-                <h3 className="font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2"><Dumbbell size={18} /> יעדי Lean Bulk</h3>
+                <h3 className="font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2"><Dumbbell size={18} /> יעדי בריאות</h3>
                 <div className="space-y-3">
                     <div><label className="text-xs text-slate-500 dark:text-slate-400">יעד קלוריות</label><input type="number" className="w-full p-2 rounded border dark:bg-slate-700 dark:text-white" value={targets.calories} onChange={(e) => setTargets({...targets, calories: parseInt(e.target.value) || 0})} /></div>
                     <div><label className="text-xs text-slate-500 dark:text-slate-400">יעד חלבון (גרם)</label><input type="number" className="w-full p-2 rounded border dark:bg-slate-700 dark:text-white" value={targets.protein} onChange={(e) => setTargets({...targets, protein: parseInt(e.target.value) || 0})} /></div>
+                    <div><label className="text-xs text-slate-500 dark:text-slate-400">יעד מים (מ"ל)</label><input type="number" className="w-full p-2 rounded border dark:bg-slate-700 dark:text-white" value={targets.water} onChange={(e) => setTargets({...targets, water: parseInt(e.target.value) || 0})} /></div>
                 </div>
             </Card>
             <Card className="p-4 bg-white dark:bg-slate-800">
@@ -210,7 +213,17 @@ const SettingsView = ({ targets, setTargets }) => {
     );
 };
 
-// 1. UniversityView
+// --- מסך סטטיסטיקה וגרפים ---
+const StatisticsView = ({ weightLog, jobs }) => {
+    return (
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border dark:border-slate-700 text-center">
+            <h3 className="font-bold dark:text-white mb-2">סטטיסטיקה</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">כאן יופיעו הגרפים (דרושה ספריית Recharts)</p>
+        </div>
+    );
+};
+
+// 1. UniversityView 
 const UniversityView = ({ assignments, setAssignments, courses, setCourses, askConfirm }) => {
   const [tab, setTab] = useState('assignments'); 
   const [assignFilter, setAssignFilter] = useState('active'); 
@@ -320,6 +333,7 @@ const UniversityView = ({ assignments, setAssignments, courses, setCourses, askC
       </div>
     );
 };
+
 // 2. BindingView
 const BindingView = ({ jobs, setJobs, addTransaction, askConfirm, inventory, setInventory }) => {
     const [tab, setTab] = useState('jobs'); 
@@ -614,6 +628,45 @@ export default function App() {
   }, [lastResetDate]);
 
   const addTransaction = (trans) => setTransactions([{ id: Date.now(), ...trans }, ...transactions]);
+
+  // NEW: Notification Logic
+  const lastNotifiedRef = useRef('');
+
+  useEffect(() => {
+    // Request permission on mount
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    const interval = setInterval(() => {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+        const now = new Date();
+        const currentDay = now.getDay();
+        const currentTime = now.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+
+        // Prevent duplicate notifications for the same minute
+        if (currentTime === lastNotifiedRef.current) return;
+
+        schedule.forEach(item => {
+            if (item.day === currentDay && item.time === currentTime && !item.done) {
+                try {
+                    new Notification("תזכורת למשימה 🔔", {
+                        body: item.title,
+                        icon: '/logo.png', // Assumes logo exists in public folder
+                        vibrate: [200, 100, 200]
+                    });
+                } catch (err) {
+                    console.error("Notification error:", err);
+                }
+            }
+        });
+
+        lastNotifiedRef.current = currentTime;
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [schedule]);
 
   const renderContent = () => {
     switch (activeTab) {
