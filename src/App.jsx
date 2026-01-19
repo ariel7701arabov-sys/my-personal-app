@@ -1,53 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Dumbbell, 
-  Utensils, 
-  GraduationCap, 
-  BookOpen, 
-  LayoutDashboard, 
-  CheckCircle2, 
-  Clock, 
-  Plus, 
-  Trash2, 
-  Pencil,
-  ChevronLeft,
-  Wallet,
-  X,
-  Save,
-  TrendingUp,
-  ArrowDownLeft,
-  ArrowUpRight,
-  HeartHandshake,
-  Book,
-  Check,
-  Beef,
-  Flame,
-  AlertTriangle,
-  AlertCircle,
-  Moon,
-  Sun,
-  Droplets,
-  Calculator,
-  Archive,
-  Star,
-  Package,
-  History,
-  ChevronDown,
-  ChevronUp,
-  Scale,
-  List,
-  RefreshCw,
-  Play,
-  Pause,
-  RotateCcw,
-  SkipForward,
-  BarChart3,
-  Settings,
-  Download,
-  Upload,
-  Calendar,
-  Timer,
-  ScrollText
+  Dumbbell, Utensils, GraduationCap, BookOpen, LayoutDashboard, CheckCircle2, 
+  Clock, Plus, Trash2, Pencil, ChevronLeft, Wallet, X, Save, TrendingUp, 
+  ArrowDownLeft, ArrowUpRight, HeartHandshake, Book, Check, Beef, Flame, 
+  AlertTriangle, AlertCircle, Moon, Sun, Droplets, Calculator, Archive, 
+  Star, Package, History, ChevronDown, ChevronUp, Scale, List, RefreshCw, 
+  Play, Pause, RotateCcw, SkipForward, BarChart3, Settings, Download, Upload,
+  Zap, BedDouble, Calendar, Timer
 } from 'lucide-react';
 
 // --- Hook לשמירה ב-LocalStorage ---
@@ -66,12 +25,57 @@ function useStickyState(defaultValue, key) {
   return [value, setValue];
 }
 
-// --- רכיבי UI בסיסיים ---
+// --- קבועים לתוכנית Ottermode ---
+const OTTERMODE_MEALS = [
+  { id: 'm1', name: 'בוקר: 3 ביצים, לחם עבה, אבוקדו/טחינה', cal: 650, prot: 25 },
+  { id: 'm2', name: 'הבוסט הנוזלי: גיינר + 400מל חלב', cal: 800, prot: 40 },
+  { id: 'm3', name: 'צהריים: 150ג בשר/עוף, אורז, ירקות', cal: 750, prot: 40 },
+  { id: 'm4', name: 'אחרי אימון: טונה/קוטג, פחמימה, פרי', cal: 500, prot: 35 },
+  { id: 'm5', name: 'לילה: יוגורט חלבון + שקדים', cal: 300, prot: 20 }
+];
 
+const WORKOUT_PLANS = {
+  A: {
+    title: 'אימון A: דחיפה (Push)',
+    focus: 'חזה עליון וכתפיים',
+    exercises: [
+      { name: 'לחיצת חזה עליון (מכונה/משקולות)', sets: 3 },
+      { name: 'לחיצת חזה שטוח', sets: 3 },
+      { name: 'לחיצת כתפיים (ישיבה/עמידה)', sets: 3 },
+      { name: 'הרחקת כתפיים לצדדים', sets: 5, note: 'עבודה נקייה' },
+      { name: 'יד אחורית (פשיטה בכבל/משקולת)', sets: 3 }
+    ]
+  },
+  B: {
+    title: 'אימון B: משיכה (Pull)',
+    focus: 'V-Taper ובטן',
+    exercises: [
+      { name: 'פולי עליון (אחיזה רחבה)', sets: 3 },
+      { name: 'חתירה (פולי תחתון/מכונה)', sets: 3 },
+      { name: 'כפיפת מרפקים (מוט/משקולות)', sets: 3 },
+      { name: 'כפיפת מרפקים "פטישים"', sets: 3 },
+      { name: 'כפיפות בטן בפולי עליון', sets: 3 },
+      { name: 'הרמות רגליים בתלייה', sets: 3, note: 'עד כשל' }
+    ]
+  },
+  C: {
+    title: 'אימון C: רגליים (Legs)',
+    focus: 'רגליים ותאומים',
+    exercises: [
+      { name: 'סקוואט (מכונה/מוט)', sets: 3 },
+      { name: 'פשיטת ברכיים (מכונה)', sets: 3 },
+      { name: 'כפיפת ברכיים (מכונה)', sets: 3 },
+      { name: 'תאומים (עמידה/ישיבה)', sets: 4 }
+    ]
+  },
+  Rest: { title: 'יום מנוחה', focus: 'התאוששות וגדילה', exercises: [] }
+};
+
+const WEEKLY_SCHEDULE = ['A', 'B', 'C', 'Rest', 'A', 'B', 'Rest'];
+
+// --- רכיבי UI בסיסיים ---
 const Card = ({ children, className = "" }) => (
-  <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors ${className}`}>
-    {children}
-  </div>
+  <div className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden transition-colors ${className}`}>{children}</div>
 );
 
 const Button = ({ children, onClick, variant = "primary", className = "", size = "md" }) => {
@@ -82,20 +86,9 @@ const Button = ({ children, onClick, variant = "primary", className = "", size =
     danger: "bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50",
     success: "bg-green-600 text-white hover:bg-green-700 shadow-md shadow-green-200 dark:shadow-none",
     outline: "border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700",
-    dark: "bg-slate-800 text-white hover:bg-slate-700"
   };
-  const sizes = {
-    xs: "px-2 py-1 text-xs",
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2.5",
-    lg: "px-6 py-3 text-lg"
-  };
-
-  return (
-    <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${sizes[size]} ${className}`}>
-      {children}
-    </button>
-  );
+  const sizes = { xs: "px-2 py-1 text-xs", sm: "px-3 py-1.5 text-sm", md: "px-4 py-2.5", lg: "px-6 py-3 text-lg" };
+  return <button onClick={onClick} className={`${baseStyle} ${variants[variant]} ${sizes[size]} ${className}`}>{children}</button>;
 };
 
 const Badge = ({ children, color = "blue" }) => {
@@ -107,11 +100,7 @@ const Badge = ({ children, color = "blue" }) => {
     purple: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
     gray: "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400",
   };
-  return (
-    <span className={`${colors[color]} px-2.5 py-0.5 rounded-full text-xs font-bold`}>
-      {children}
-    </span>
-  );
+  return <span className={`${colors[color]} px-2.5 py-0.5 rounded-full text-xs font-bold`}>{children}</span>;
 };
 
 const IconButton = ({ icon: Icon, onClick, color = "slate" }) => {
@@ -120,18 +109,7 @@ const IconButton = ({ icon: Icon, onClick, color = "slate" }) => {
     red: "text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30",
     blue: "text-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30",
   };
-  return (
-    <button 
-      onClick={(e) => { 
-        e.preventDefault(); 
-        e.stopPropagation(); 
-        onClick(e); 
-      }} 
-      className={`p-2 rounded-full transition-colors ${colors[color]}`}
-    >
-      <Icon size={18} />
-    </button>
-  );
+  return <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(e); }} className={`p-2 rounded-full transition-colors ${colors[color]}`}><Icon size={18} /></button>;
 };
 
 const ConfirmModal = ({ isOpen, text, onConfirm, onCancel }) => {
@@ -140,24 +118,15 @@ const ConfirmModal = ({ isOpen, text, onConfirm, onCancel }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-sm scale-100 animate-in zoom-in-95 border dark:border-slate-700">
         <div className="flex flex-col items-center text-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500">
-            <AlertTriangle size={24} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">למחוק פריט זה?</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{text}</p>
-          </div>
-          <div className="flex gap-3 w-full mt-2">
-            <Button className="flex-1" variant="secondary" onClick={onCancel}>ביטול</Button>
-            <Button className="flex-1" variant="danger" onClick={onConfirm}>כן, מחק</Button>
-          </div>
+          <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500"><AlertTriangle size={24} /></div>
+          <div><h3 className="text-lg font-bold text-slate-800 dark:text-white">למחוק?</h3><p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{text}</p></div>
+          <div className="flex gap-3 w-full mt-2"><Button className="flex-1" variant="secondary" onClick={onCancel}>ביטול</Button><Button className="flex-1" variant="danger" onClick={onConfirm}>כן, מחק</Button></div>
         </div>
       </div>
     </div>
   );
 };
 
-// פונקציות עזר לזמן
 const isInCurrentWeek = (dateStr) => {
     if (!dateStr) return false;
     const d = new Date(dateStr);
@@ -177,12 +146,9 @@ const getTimeRemaining = (dateStr, timeStr) => {
     const deadline = new Date(`${dateStr}T${timeStr || '23:59'}`);
     const now = new Date();
     const diff = deadline - now;
-    
     if (diff <= 0) return "הזמן עבר";
-    
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
     if (days > 0) return `${days} ימים, ${hours} שעות`;
     return `${hours} שעות, ${Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))} דקות`;
 };
@@ -225,13 +191,12 @@ const SettingsView = ({ targets, setTargets }) => {
 
     return (
         <div className="space-y-6 animate-in fade-in">
-            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">הגדרות</h2>
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">הגדרות Ottermode</h2>
             <Card className="p-4 bg-white dark:bg-slate-800">
-                <h3 className="font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2"><Dumbbell size={18} /> יעדי בריאות</h3>
+                <h3 className="font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2"><Dumbbell size={18} /> יעדי Lean Bulk</h3>
                 <div className="space-y-3">
                     <div><label className="text-xs text-slate-500 dark:text-slate-400">יעד קלוריות</label><input type="number" className="w-full p-2 rounded border dark:bg-slate-700 dark:text-white" value={targets.calories} onChange={(e) => setTargets({...targets, calories: parseInt(e.target.value) || 0})} /></div>
                     <div><label className="text-xs text-slate-500 dark:text-slate-400">יעד חלבון (גרם)</label><input type="number" className="w-full p-2 rounded border dark:bg-slate-700 dark:text-white" value={targets.protein} onChange={(e) => setTargets({...targets, protein: parseInt(e.target.value) || 0})} /></div>
-                    <div><label className="text-xs text-slate-500 dark:text-slate-400">יעד מים (מ"ל)</label><input type="number" className="w-full p-2 rounded border dark:bg-slate-700 dark:text-white" value={targets.water} onChange={(e) => setTargets({...targets, water: parseInt(e.target.value) || 0})} /></div>
                 </div>
             </Card>
             <Card className="p-4 bg-white dark:bg-slate-800">
@@ -245,17 +210,7 @@ const SettingsView = ({ targets, setTargets }) => {
     );
 };
 
-// --- מסך סטטיסטיקה וגרפים ---
-const StatisticsView = ({ weightLog, jobs }) => {
-    return (
-        <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border dark:border-slate-700 text-center">
-            <h3 className="font-bold dark:text-white mb-2">סטטיסטיקה</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">כאן יופיעו הגרפים (דרושה ספריית Recharts)</p>
-        </div>
-    );
-};
-
-// 1. UniversityView 
+// 1. UniversityView
 const UniversityView = ({ assignments, setAssignments, courses, setCourses, askConfirm }) => {
   const [tab, setTab] = useState('assignments'); 
   const [assignFilter, setAssignFilter] = useState('active'); 
@@ -365,8 +320,7 @@ const UniversityView = ({ assignments, setAssignments, courses, setCourses, askC
       </div>
     );
 };
-
-// 2. BindingView 
+// 2. BindingView
 const BindingView = ({ jobs, setJobs, addTransaction, askConfirm, inventory, setInventory }) => {
     const [tab, setTab] = useState('jobs'); 
     const [form, setForm] = useState({ client: "", type: "", quantity: 1, price: "", cost: "" });
@@ -457,106 +411,74 @@ const BindingView = ({ jobs, setJobs, addTransaction, askConfirm, inventory, set
     );
 };
 
-// 3. HealthView
-const HealthView = ({ calories, setCalories, protein, setProtein, water, setWater, workouts, setWorkouts, meals, setMeals, favMeals, setFavMeals, askConfirm, exerciseLibrary, setExerciseLibrary, weightLog, setWeightLog, targets }) => {
-    const [activeTab, setActiveTab] = useState('workout'); const [subTab, setSubTab] = useState('plan'); 
-    const [workoutForm, setWorkoutForm] = useState({ day: "ראשון", type: "" }); const [isWorkoutFormOpen, setIsWorkoutFormOpen] = useState(false); const [expandedWorkoutId, setExpandedWorkoutId] = useState(null);
-    const [exerciseForm, setExerciseForm] = useState({ name: "", sets: "", reps: "", weight: "" }); const [libForm, setLibForm] = useState({ name: "", sets: "", reps: "", weight: "" });
-    const [mealForm, setMealForm] = useState({ name: "", cal: "", prot: "" }); const [isMealFormOpen, setIsMealFormOpen] = useState(false);
-    const [weightInput, setWeightInput] = useState("");
-    const [activeSession, setActiveSession] = useState(null); const [stopwatch, setStopwatch] = useState(0); const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
-    const [showWeightUpdateModal, setShowWeightUpdateModal] = useState(false);
-    const [editLibId, setEditLibId] = useState(null);
+// 3. HealthView (Ottermode)
+const HealthView = ({ 
+    calories, setCalories, protein, setProtein, water, setWater, 
+    meals, setMeals, askConfirm, weightLog, setWeightLog, targets 
+}) => {
+  const [activeTab, setActiveTab] = useState('workout'); 
+  const todayIndex = new Date().getDay(); 
+  const todayPlanKey = WEEKLY_SCHEDULE[todayIndex];
+  const todayWorkout = WORKOUT_PLANS[todayPlanKey];
+  const [weekType, setWeekType] = useStickyState('strength', 'otter_week_type');
+  const [activeSession, setActiveSession] = useState(null); 
+  const [stopwatch, setStopwatch] = useState(0);
+  const [isStopwatchRunning, setIsStopwatchRunning] = useState(false);
+  const [showWeightUpdateModal, setShowWeightUpdateModal] = useState(false);
+  const [weightInput, setWeightInput] = useState("");
 
-    // Wake Lock
-    useEffect(() => { let wakeLock = null; const requestWakeLock = async () => { if ('wakeLock' in navigator && activeSession) { try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) { console.log(err); } } }; if (activeSession) requestWakeLock(); return () => { if (wakeLock) wakeLock.release(); }; }, [activeSession]);
-    useEffect(() => { let interval; if (isStopwatchRunning) interval = setInterval(() => setStopwatch(p => p + 1), 1000); return () => clearInterval(interval); }, [isStopwatchRunning]);
-    const formatTime = (secs) => { const m = Math.floor(secs / 60).toString().padStart(2,'0'); const s = (secs % 60).toString().padStart(2,'0'); return `${m}:${s}`; };
-    
-    // Handlers
-    const handleStartSession = (workoutId) => { const workout = workouts.find(w => w.id === workoutId); if (!workout || !workout.exercises || workout.exercises.length === 0) { alert("אין תרגילים"); return; } setActiveSession({ workoutId, exIndex: 0, setNum: 1 }); setStopwatch(0); setIsStopwatchRunning(false); };
-    const handleNextSet = () => { const workout = workouts.find(w => w.id === activeSession.workoutId); const currentEx = workout.exercises[activeSession.exIndex]; const totalSets = parseInt(currentEx.sets) || 1; if (activeSession.setNum < totalSets) { setActiveSession({ ...activeSession, setNum: activeSession.setNum + 1 }); setStopwatch(0); } else { setShowWeightUpdateModal(true); } };
-    const handleWeightUpdateConfirm = (addedWeight) => { setShowWeightUpdateModal(false); const workout = workouts.find(w => w.id === activeSession.workoutId); const currentEx = workout.exercises[activeSession.exIndex]; if (addedWeight > 0) { const newWeight = parseFloat(currentEx.weight || 0) + parseFloat(addedWeight); const updatedExercises = workout.exercises.map((ex, idx) => idx === activeSession.exIndex ? { ...ex, weight: newWeight } : ex ); setWorkouts(workouts.map(w => w.id === activeSession.workoutId ? { ...w, exercises: updatedExercises } : w)); setExerciseLibrary(exerciseLibrary.map(ex => ex.name === currentEx.name ? { ...ex, weight: newWeight, lastUpdated: new Date().toLocaleDateString('he-IL') } : ex )); } if (activeSession.exIndex < workout.exercises.length - 1) { setActiveSession({ workoutId: activeSession.workoutId, exIndex: activeSession.exIndex + 1, setNum: 1 }); setStopwatch(0); } else { handleFinishWorkout(); } };
-    const handleFinishWorkout = () => { setWorkouts(workouts.map(w => w.id === activeSession.workoutId ? { ...w, done: true } : w)); setActiveSession(null); setStopwatch(0); setIsStopwatchRunning(false); };
-    const handleQuitSession = () => askConfirm("לצאת מהאימון?", () => { setActiveSession(null); setStopwatch(0); setIsStopwatchRunning(false); });
-    const handleAddWorkout = () => { if (!workoutForm.type) return; setWorkouts([...workouts, { id: Date.now(), ...workoutForm, done: false, exercises: [] }]); setWorkoutForm({ day: "ראשון", type: "" }); setIsWorkoutFormOpen(false); };
-    const handleAddToLibrary = () => { if(!libForm.name) return; const today = new Date().toLocaleDateString('he-IL'); if(editLibId) { setExerciseLibrary(exerciseLibrary.map(e => e.id === editLibId ? { ...e, ...libForm, lastUpdated: today } : e)); setEditLibId(null); } else { setExerciseLibrary([...exerciseLibrary, { id: Date.now(), ...libForm, lastUpdated: today }]); } setLibForm({ name: "", sets: "", reps: "", weight: "" }); };
-    const handleEditLibraryItem = (item) => { setLibForm({ name: item.name, sets: item.sets, reps: item.reps, weight: item.weight }); setEditLibId(item.id); };
-    const handleDeleteFromLibrary = (id) => askConfirm("למחוק?", () => setExerciseLibrary(exerciseLibrary.filter(e => e.id !== id)));
-    const handleLibrarySelect = (e) => { const selectedName = e.target.value; const libItem = exerciseLibrary.find(ex => ex.name === selectedName); setExerciseForm({ name: selectedName, sets: libItem ? libItem.sets : "", reps: libItem ? libItem.reps : "", weight: libItem ? libItem.weight : "" }); };
-    const handleAddExerciseToWorkout = (workoutId) => { if (!exerciseForm.name) return; const newExercise = { id: Date.now(), ...exerciseForm, lastUpdated: new Date().toLocaleDateString('he-IL') }; setWorkouts(workouts.map(w => w.id === workoutId ? { ...w, exercises: [...(w.exercises || []), newExercise] } : w)); setExerciseForm({ name: "", sets: "", reps: "", weight: "" }); };
-    const handleDeleteExercise = (workoutId, exerciseId) => { setWorkouts(workouts.map(w => w.id === workoutId ? { ...w, exercises: w.exercises.filter(e => e.id !== exerciseId) } : w)); };
-    const handleAddWeight = () => { if(!weightInput) return; setWeightLog([...weightLog, { id: Date.now(), date: new Date().toLocaleDateString('he-IL'), weight: parseFloat(weightInput) }]); setWeightInput(""); };
-    const handleDeleteWeight = (id) => askConfirm("למחוק?", () => setWeightLog(weightLog.filter(w => w.id !== id)));
-    const handleResetWeight = () => askConfirm("לאפס הכל?", () => setWeightLog([]));
-    const handleAddMeal = (mealData = mealForm) => { if (!mealData.name || !mealData.cal) return; const newMeal = { id: Date.now(), ...mealData, cal: parseInt(mealData.cal), prot: parseInt(mealData.prot) || 0 }; setMeals([...meals, newMeal]); setCalories(c => c + newMeal.cal); setProtein(p => p + newMeal.prot); if(mealData === mealForm) setMealForm({ name: "", cal: "", prot: "" }); setIsMealFormOpen(false); };
-    const handleSaveFav = () => { if (!mealForm.name || !mealForm.cal) return; setFavMeals([...favMeals, { id: Date.now(), ...mealForm }]); };
-    const handleDeleteMeal = (id, cal, prot) => { askConfirm("למחוק?", () => { setMeals(meals.filter(m => m.id !== id)); setCalories(c => Math.max(0, c - cal)); setProtein(p => Math.max(0, p - (prot || 0))); }); };
-    const currentWeight = weightLog.length > 0 ? weightLog[weightLog.length - 1].weight : 0; const startWeight = weightLog.length > 0 ? weightLog[0].weight : 0; const weightDiff = (currentWeight - startWeight).toFixed(1);
+  useEffect(() => { let wakeLock = null; const requestWakeLock = async () => { if ('wakeLock' in navigator && activeSession) try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {} }; if (activeSession) requestWakeLock(); return () => { if (wakeLock) wakeLock.release(); }; }, [activeSession]);
+  useEffect(() => { let interval; if (isStopwatchRunning) interval = setInterval(() => setStopwatch(p => p + 1), 1000); return () => clearInterval(interval); }, [isStopwatchRunning]);
+  const formatTime = (secs) => { const m = Math.floor(secs / 60).toString().padStart(2, '0'); const s = (secs % 60).toString().padStart(2, '0'); return `${m}:${s}`; };
 
-    if (activeSession) {
-        const currentWorkout = workouts.find(w => w.id === activeSession.workoutId); const currentEx = currentWorkout.exercises[activeSession.exIndex]; const totalSets = parseInt(currentEx.sets) || 1;
-        if (showWeightUpdateModal) { return (<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm"><Card className="p-6 w-full max-w-sm text-center"><h3 className="text-xl font-bold mb-4 dark:text-white">סיימת תרגיל!</h3><p className="mb-4 text-slate-600 dark:text-slate-300">האם הוספת משקל?</p><div className="grid grid-cols-2 gap-3"><Button onClick={() => handleWeightUpdateConfirm(0)} variant="secondary">לא</Button><div className="flex gap-1"><input id="addW" type="number" placeholder="+קג" className="w-16 p-2 rounded border text-center" /><Button onClick={() => handleWeightUpdateConfirm(document.getElementById('addW').value || 0)}>עדכן</Button></div></div></Card></div>); }
-        return (
-            <div className="space-y-6 h-full flex flex-col animate-in fade-in">
-                <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-xl"><div><h2 className="font-bold text-lg dark:text-white">{currentWorkout.type}</h2><p className="text-xs text-slate-500 dark:text-slate-300">אימון חי</p></div><Button size="sm" variant="danger" onClick={handleQuitSession}>יציאה</Button></div>
-                <div className="flex-1 flex flex-col justify-center gap-6 text-center">
-                    <div><h1 className="text-3xl font-black text-slate-800 dark:text-white mb-2">{currentEx.name}</h1><div className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-4 py-1 rounded-full font-bold">סט {activeSession.setNum} מתוך {totalSets}</div></div>
-                    <div className="grid grid-cols-2 gap-4"><Card className="p-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600"><div className="text-slate-500 dark:text-slate-400 text-sm">משקל</div><div className="text-2xl font-bold dark:text-white">{currentEx.weight} <span className="text-sm">ק"ג</span></div></Card><Card className="p-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600"><div className="text-slate-500 dark:text-slate-400 text-sm">חזרות</div><div className="text-2xl font-bold dark:text-white">{currentEx.reps}</div></Card></div>
-                    <div className="my-4"><div className="text-6xl font-mono font-bold text-slate-700 dark:text-slate-200 mb-4 tracking-wider">{formatTime(stopwatch)}</div><div className="flex justify-center gap-4"><button onClick={() => setIsStopwatchRunning(!isStopwatchRunning)} className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 ${isStopwatchRunning ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>{isStopwatchRunning ? <Pause size={32} /> : <Play size={32} />}</button><button onClick={() => { setIsStopwatchRunning(false); setStopwatch(0); }} className="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shadow hover:bg-slate-200"><RotateCcw size={28} /></button></div></div>
-                </div>
-                <Button size="lg" className="w-full py-4 text-xl shadow-xl" onClick={handleNextSet}>{activeSession.setNum < totalSets ? `סט הבא (${activeSession.setNum + 1})` : "סיים תרגיל"} <SkipForward className="mr-2" /></Button>
-            </div>
-        );
-    }
-  
-    return (
-      <div className="space-y-6">
-        <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
-          <button onClick={() => setActiveTab('workout')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'workout' ? 'bg-white dark:bg-slate-600 shadow text-blue-600 dark:text-blue-300' : 'text-slate-500 dark:text-slate-400'}`}>אימונים</button>
-          <button onClick={() => setActiveTab('food')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'food' ? 'bg-white dark:bg-slate-600 shadow text-green-600 dark:text-green-300' : 'text-slate-500 dark:text-slate-400'}`}>תזונה</button>
-          <button onClick={() => setActiveTab('weight')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'weight' ? 'bg-white dark:bg-slate-600 shadow text-cyan-600 dark:text-cyan-300' : 'text-slate-500 dark:text-slate-400'}`}>משקל</button>
-        </div>
-        {activeTab === 'workout' && (
-            <>
-              <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-                 <button onClick={() => setSubTab('plan')} className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${subTab === 'plan' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600'}`}>תוכנית שבועית</button>
-                 <button onClick={() => setSubTab('library')} className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${subTab === 'library' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600'}`}>מאגר תרגילים</button>
-              </div>
-              {subTab === 'library' ? (
-                  <div className="space-y-4 animate-in fade-in">
-                      <Card className="p-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
-                          {/* Fixed Exercise Library Form */}
-                          <div className="grid gap-3">
-                              <input placeholder="שם התרגיל" className="p-2 rounded border w-full text-sm dark:bg-slate-700 dark:text-white dark:border-slate-600" value={libForm.name} onChange={e => setLibForm({...libForm, name: e.target.value})} />
-                              <div className="flex gap-2">
-                                  <input type="number" placeholder="סטים" className="p-2 rounded border w-1/3 text-sm dark:bg-slate-700 dark:text-white dark:border-slate-600" value={libForm.sets} onChange={e => setLibForm({...libForm, sets: e.target.value})} />
-                                  <input type="number" placeholder="חזרות" className="p-2 rounded border w-1/3 text-sm dark:bg-slate-700 dark:text-white dark:border-slate-600" value={libForm.reps} onChange={e => setLibForm({...libForm, reps: e.target.value})} />
-                                  <input type="number" placeholder='ק"ג' className="p-2 rounded border w-1/3 text-sm dark:bg-slate-700 dark:text-white dark:border-slate-600" value={libForm.weight} onChange={e => setLibForm({...libForm, weight: e.target.value})} />
-                              </div>
-                              <Button size="sm" onClick={handleAddToLibrary}>{editLibId ? "עדכן תרגיל" : "הוסף למאגר"}</Button>
-                          </div>
-                      </Card>
-                      <div className="space-y-2">{exerciseLibrary.map(ex => (<div key={ex.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg"><div><div className="font-bold text-sm dark:text-white">{ex.name}</div><div className="text-xs text-slate-500 dark:text-slate-400">{ex.sets} סטים • {ex.reps} חזרות • {ex.weight} ק"ג</div><div className="text-[10px] text-slate-400 mt-0.5">עודכן: {ex.lastUpdated}</div></div><div className="flex gap-1"><IconButton icon={Pencil} color="blue" onClick={() => handleEditLibraryItem(ex)} /><IconButton icon={Trash2} color="red" onClick={() => handleDeleteFromLibrary(ex.id)} /></div></div>))}</div>
-                  </div>
-              ) : (
-                  <div className="space-y-4 animate-in fade-in">
-                      <Card className="p-5 bg-gradient-to-br from-blue-500 to-indigo-600 text-white"><h3 className="font-bold text-lg mb-2">האימון הבא שלך</h3><div className="text-3xl font-bold mb-1">{workouts.find(w => !w.done)?.type || "מנוחה"}</div><p className="opacity-80">{workouts.find(w => !w.done)?.day || "הכל הושלם!"}</p></Card>
-                      <div className="flex justify-between items-center mt-4"><h3 className="font-bold text-slate-700 dark:text-slate-300">תוכנית שבועית</h3><Button size="sm" onClick={() => setIsWorkoutFormOpen(!isWorkoutFormOpen)}>{isWorkoutFormOpen ? <X size={16}/> : <Plus size={16} />}</Button></div>
-                      {isWorkoutFormOpen && (<Card className="p-3 bg-blue-50 dark:bg-blue-900/20 flex gap-2 items-center"><select className="p-2 rounded border text-sm dark:bg-slate-700 dark:text-white dark:border-slate-600" value={workoutForm.day} onChange={e => setWorkoutForm({...workoutForm, day: e.target.value})}>{["ראשון","שני","שלישי","רביעי","חמישי","שישי"].map(d => <option key={d} value={d}>{d}</option>)}</select><input placeholder="שם האימון (למשל: חזה)" className="p-2 rounded border flex-1 text-sm dark:bg-slate-700 dark:text-white dark:border-slate-600" value={workoutForm.type} onChange={e => setWorkoutForm({...workoutForm, type: e.target.value})} /><Button size="sm" onClick={handleAddWorkout}><Save size={16} /></Button></Card>)}
-                      <div className="space-y-2">{workouts.map((w) => (<Card key={w.id} className={`border dark:border-slate-700 ${w.done ? 'bg-slate-50 dark:bg-slate-800/50 opacity-60' : 'bg-white dark:bg-slate-800'}`}><div className="p-3 flex justify-between items-center"><div className="flex items-center gap-3 flex-1"><div onClick={() => setWorkouts(workouts.map(item => item.id === w.id ? {...item, done: !item.done} : item))} className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors ${w.done ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400'}`}>{w.done ? <CheckCircle2 size={16} /> : <Dumbbell size={16} />}</div><div><div className="font-bold text-slate-800 dark:text-white">{w.type}</div><div className="text-xs text-slate-500 dark:text-slate-400">{w.day} • {(w.exercises || []).length} תרגילים</div></div></div><div className="flex items-center gap-2">{(w.exercises && w.exercises.length > 0 && !w.done) && <button onClick={() => handleStartSession(w.id)} className="bg-blue-600 text-white p-2 rounded-full shadow-lg hover:bg-blue-700 active:scale-95 transition-transform"><Play size={16} fill="currentColor" /></button>}<IconButton icon={expandedWorkoutId === w.id ? ChevronUp : ChevronDown} onClick={() => setExpandedWorkoutId(expandedWorkoutId === w.id ? null : w.id)} /><IconButton icon={Trash2} color="red" onClick={() => askConfirm("למחוק אימון זה?", () => setWorkouts(workouts.filter(i => i.id !== w.id)))} /></div></div>{expandedWorkoutId === w.id && (<div className="border-t dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/50"><div className="space-y-2 mb-3">{(w.exercises || []).map(ex => (<div key={ex.id} className="flex justify-between items-center bg-white dark:bg-slate-700 p-2 rounded shadow-sm"><div><div className="font-bold text-sm dark:text-white">{ex.name}</div><div className="text-[10px] text-slate-500 dark:text-slate-400">{ex.sets} סטים | {ex.reps} חזרות | {ex.weight} ק"ג</div></div><button onClick={() => handleDeleteExercise(w.id, ex.id)} className="text-slate-300 hover:text-red-500 p-1"><X size={14} /></button></div>))}</div><div className="grid grid-cols-4 gap-2 mb-2"><select className="col-span-4 p-1.5 rounded border dark:bg-slate-700 dark:border-slate-600 dark:text-white text-sm" value={exerciseForm.name} onChange={handleLibrarySelect}><option value="">בחר תרגיל...</option>{exerciseLibrary.map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}</select><button onClick={() => handleAddExerciseToWorkout(w.id)} className="bg-blue-600 text-white rounded p-1.5 flex items-center justify-center col-span-4 hover:bg-blue-700">הוסף תרגיל לאימון</button></div></div>)}</Card>))}</div>
-                  </div>
-              )}
-            </>
-        )}
-  
-        {activeTab === 'weight' && (<div className="space-y-6 animate-in fade-in"><Card className="p-5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white"><div className="flex items-center gap-4"><div className="p-3 bg-white/20 rounded-full"><Scale size={32} /></div><div><div className="text-cyan-100 text-sm">משקל נוכחי</div><div className="text-4xl font-bold">{currentWeight} <span className="text-xl font-normal">ק"ג</span></div></div><div className="mr-auto text-right"><div className="text-cyan-100 text-sm">שינוי</div><div className="text-2xl font-bold" dir="ltr">{weightDiff > 0 ? '+' : ''}{weightDiff}</div></div></div></Card><div className="flex gap-2 mb-4"><input type="number" placeholder="משקל (קג)" className="p-2 rounded border flex-1 dark:bg-slate-700 dark:border-slate-600 dark:text-white" value={weightInput} onChange={e => setWeightInput(e.target.value)} /><Button onClick={handleAddWeight}>שמור</Button></div><div className="space-y-2">{[...weightLog].reverse().map(log => (<div key={log.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg"><div className="font-medium text-slate-800 dark:text-white">{log.date}</div><div className="flex items-center gap-3"><span className="font-bold text-cyan-600 dark:text-cyan-400">{log.weight} ק"ג</span><IconButton icon={Trash2} color="red" onClick={() => handleDeleteWeight(log.id)} /></div></div>))}</div></div>)}
-        {activeTab === 'food' && (<div className="space-y-6"><Card className="p-4 relative overflow-hidden"><div className="grid grid-cols-3 gap-2"><div className="text-center"><div className="text-[10px] text-slate-500 mb-1">קלוריות</div><div className="text-xl font-bold text-slate-700 dark:text-white">{calories}</div></div><div className="text-center border-x border-slate-100 dark:border-slate-700"><div className="text-[10px] text-slate-500 mb-1">חלבון</div><div className="text-xl font-bold text-blue-600">{protein}g</div></div><div className="text-center"><div className="text-[10px] text-slate-500 mb-1">מים</div><div className="text-xl font-bold text-cyan-500">{water}ml</div></div></div><div className="mt-4 bg-cyan-50 dark:bg-cyan-900/20 p-3 rounded-lg flex items-center justify-between"><div className="flex items-center gap-2"><Droplets className="text-cyan-500" size={20} /><div className="text-xs text-cyan-700 dark:text-cyan-300">שתית {water} מתוך {targets.water} מ"ל</div></div><button onClick={() => setWater(w => w + 200)} className="bg-cyan-500 text-white text-xs px-2 py-1 rounded-full hover:bg-cyan-600 transition-colors shadow-sm active:scale-95">+ כוס (200)</button></div></Card><div><h3 className="font-bold text-slate-700 dark:text-slate-300 mb-2">ארוחות היום</h3><div className="space-y-2">{meals.map(meal => (<div key={meal.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg group"><div className="flex items-center gap-2"><span className="text-lg">🍽️</span><div className="font-medium text-sm dark:text-white">{meal.name}</div></div><div className="flex items-center gap-3"><div className="flex items-center gap-2 text-sm">{meal.prot > 0 && <span className="text-blue-600 font-bold">{meal.prot}g</span>}<span className="text-green-600 font-bold">{meal.cal} cal</span></div><IconButton icon={Trash2} color="red" onClick={() => handleDeleteMeal(meal.id, meal.cal, meal.prot)} /></div></div>))}{isMealFormOpen ? (<div className="p-3 bg-slate-50 dark:bg-slate-900 rounded border border-dashed border-slate-300 dark:border-slate-700">{favMeals.length > 0 && (<div className="flex gap-2 mb-3 overflow-x-auto pb-1">{favMeals.map(fav => (<button key={fav.id} onClick={() => handleAddMeal(fav)} className="text-xs bg-white dark:bg-slate-800 border dark:border-slate-600 px-2 py-1 rounded-full whitespace-nowrap hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-white">⭐ {fav.name}</button>))}</div>)}<input placeholder="שם הארוחה" className="p-2 rounded border w-full text-sm mb-2 dark:bg-slate-800 dark:border-slate-600 dark:text-white" value={mealForm.name} onChange={e => setMealForm({...mealForm, name: e.target.value})} /><div className="flex gap-2 mb-2"><input placeholder="קק'ל" type="number" className="p-2 rounded border w-1/2 text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white" value={mealForm.cal} onChange={e => setMealForm({...mealForm, cal: e.target.value})} /><input placeholder="חלבון (ג)" type="number" className="p-2 rounded border w-1/2 text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-white" value={mealForm.prot} onChange={e => setMealForm({...mealForm, prot: e.target.value})} /></div><div className="flex gap-2"><Button size="sm" onClick={() => handleAddMeal()} className="flex-1">שמור</Button><Button size="sm" onClick={handleSaveFav} variant="outline" className="px-2" title="שמור במועדפים"><Star size={16} /></Button><Button size="sm" onClick={() => setIsMealFormOpen(false)} variant="secondary" className="flex-1">ביטול</Button></div></div>) : (<button onClick={() => setIsMealFormOpen(true)} className="w-full flex justify-center p-3 bg-white dark:bg-slate-800 border rounded-lg border-dashed border-slate-300 dark:border-slate-700 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">+ הוסף ארוחה</button>)}</div></div></div>)}
-      </div>
-    );
+  const handleStartSession = () => { if (!todayWorkout.exercises.length) return; setActiveSession({ exIndex: 0, setNum: 1 }); setStopwatch(0); setIsStopwatchRunning(false); };
+  const handleNextSet = () => { const currentEx = todayWorkout.exercises[activeSession.exIndex]; if (activeSession.setNum < currentEx.sets) { setActiveSession({ ...activeSession, setNum: activeSession.setNum + 1 }); setStopwatch(0); } else { setShowWeightUpdateModal(true); } };
+  const handleWeightUpdateConfirm = () => { setShowWeightUpdateModal(false); if (activeSession.exIndex < todayWorkout.exercises.length - 1) { setActiveSession({ exIndex: activeSession.exIndex + 1, setNum: 1 }); setStopwatch(0); } else { setActiveSession(null); setStopwatch(0); setIsStopwatchRunning(false); alert("אימון הושלם! כל הכבוד."); } };
+  const handleToggleMeal = (meal) => { const isEaten = meals.some(m => m.id === meal.id); if (!isEaten) { setMeals([...meals, { ...meal, time: new Date().toLocaleTimeString() }]); setCalories(c => c + meal.cal); setProtein(p => p + meal.prot); } else { setMeals(meals.filter(m => m.id !== meal.id)); setCalories(c => Math.max(0, c - meal.cal)); setProtein(p => Math.max(0, p - meal.prot)); } };
+  const handleAddWeight = () => { if(!weightInput) return; const today = new Date().toLocaleDateString('he-IL'); setWeightLog([...weightLog, { id: Date.now(), date: today, weight: parseFloat(weightInput) }]); setWeightInput(""); };
+  const currentWeight = weightLog.length > 0 ? weightLog[weightLog.length - 1].weight : 66; 
+
+  if (activeSession) {
+      const currentEx = todayWorkout.exercises[activeSession.exIndex];
+      const repsRange = weekType === 'strength' ? '6-8' : '12-15';
+      const restTime = weekType === 'strength' ? '2-3 דק\'' : '60 שניות';
+      return (
+          <div className="space-y-6 h-full flex flex-col animate-in fade-in">
+              <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-3 rounded-xl"><div><h2 className="font-bold text-lg dark:text-white">{todayWorkout.title}</h2><p className="text-xs text-slate-500 dark:text-slate-300">שבוע {weekType === 'strength' ? 'כוח' : 'נפח'}</p></div><Button size="sm" variant="danger" onClick={() => setActiveSession(null)}>יציאה</Button></div>
+              {showWeightUpdateModal && (<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm"><Card className="p-6 w-full max-w-sm text-center"><h3 className="text-xl font-bold mb-4 dark:text-white">סיימת תרגיל!</h3><Button onClick={handleWeightUpdateConfirm} className="w-full">המשך לתרגיל הבא</Button></Card></div>)}
+              <div className="flex-1 flex flex-col justify-center gap-6 text-center"><div><h1 className="text-3xl font-black text-slate-800 dark:text-white mb-2">{currentEx.name}</h1><div className="inline-block bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-4 py-1 rounded-full font-bold">סט {activeSession.setNum} מתוך {currentEx.sets}</div></div><div className="grid grid-cols-2 gap-4"><Card className="p-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600"><div className="text-slate-500 dark:text-slate-400 text-sm">יעד חזרות</div><div className="text-2xl font-bold dark:text-white">{repsRange}</div></Card><Card className="p-4 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600"><div className="text-slate-500 dark:text-slate-400 text-sm">מנוחה מומלצת</div><div className="text-2xl font-bold dark:text-white">{restTime}</div></Card></div>{currentEx.note && <div className="text-amber-500 text-sm font-bold">⚠️ {currentEx.note}</div>}<div className="my-4"><div className="text-6xl font-mono font-bold text-slate-700 dark:text-slate-200 mb-4 tracking-wider">{formatTime(stopwatch)}</div><div className="flex justify-center gap-4"><button onClick={() => setIsStopwatchRunning(!isStopwatchRunning)} className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 ${isStopwatchRunning ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>{isStopwatchRunning ? <Pause size={32} /> : <Play size={32} />}</button><button onClick={() => { setIsStopwatchRunning(false); setStopwatch(0); }} className="w-16 h-16 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shadow hover:bg-slate-200"><RotateCcw size={28} /></button></div></div></div><Button size="lg" className="w-full py-4 text-xl shadow-xl" onClick={handleNextSet}>{activeSession.setNum < currentEx.sets ? `סט הבא` : "סיים תרגיל"} <SkipForward className="mr-2" /></Button>
+          </div>
+      );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl"><button onClick={() => setActiveTab('workout')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'workout' ? 'bg-white dark:bg-slate-600 shadow text-blue-600 dark:text-blue-300' : 'text-slate-500 dark:text-slate-400'}`}>אימונים</button><button onClick={() => setActiveTab('food')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'food' ? 'bg-white dark:bg-slate-600 shadow text-green-600 dark:text-green-300' : 'text-slate-500 dark:text-slate-400'}`}>תזונה</button><button onClick={() => setActiveTab('weight')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'weight' ? 'bg-white dark:bg-slate-600 shadow text-cyan-600 dark:text-cyan-300' : 'text-slate-500 dark:text-slate-400'}`}>משקל</button></div>
+      {activeTab === 'workout' && (
+          <div className="space-y-6 animate-in fade-in">
+              <div className="flex justify-between items-center"><h2 className="text-xl font-bold dark:text-white">Ottermode</h2><button onClick={() => setWeekType(weekType === 'strength' ? 'pump' : 'strength')} className={`px-4 py-1.5 rounded-full text-sm font-bold border transition-colors ${weekType === 'strength' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-pink-100 text-pink-700 border-pink-200'}`}>{weekType === 'strength' ? '🏋️ כוח (6-8)' : '💪 נפח (12-15)'}</button></div>
+              {todayWorkout.exercises.length > 0 ? (<Card className="p-0 overflow-hidden border-l-4 border-l-blue-500"><div className="p-5 bg-slate-50 dark:bg-slate-800/50"><h3 className="text-lg font-bold dark:text-white">{todayWorkout.title}</h3><p className="text-slate-500 text-sm">פוקוס: {todayWorkout.focus}</p><Button onClick={handleStartSession} className="w-full mt-4 py-3 text-lg"><Play size={20} /> התחל אימון</Button></div><div className="p-4 space-y-3">{todayWorkout.exercises.map((ex, idx) => (<div key={idx} className="flex justify-between items-center border-b dark:border-slate-700 last:border-0 pb-2 last:pb-0"><span className="font-medium dark:text-slate-200">{ex.name}</span><Badge color="gray">{ex.sets} סטים</Badge></div>))}</div></Card>) : (<Card className="p-8 text-center bg-green-50 dark:bg-green-900/20 border-green-200"><h3 className="text-xl font-bold text-green-700 dark:text-green-300">יום מנוחה</h3><p className="text-green-600 dark:text-green-400">תאכל טוב ותישן 8 שעות.</p></Card>)}
+              <div className="grid grid-cols-2 gap-3"><Card className="p-3 bg-indigo-50 dark:bg-indigo-900/20"><h4 className="font-bold text-indigo-800 dark:text-indigo-300 text-sm mb-1">Overload</h4><p className="text-xs text-indigo-600 dark:text-indigo-400">+1 ק"ג/חזרה כל אימון</p></Card><Card className="p-3 bg-blue-50 dark:bg-blue-900/20"><h4 className="font-bold text-blue-800 dark:text-blue-300 text-sm mb-1">שינה</h4><p className="text-xs text-blue-600 dark:text-blue-400">7-8 שעות חובה!</p></Card></div>
+          </div>
+      )}
+      {activeTab === 'food' && (
+          <div className="space-y-6 animate-in fade-in">
+              <Card className="p-4 relative overflow-hidden bg-slate-900 text-white"><div className="grid grid-cols-2 gap-4"><div className="text-center"><div className="text-xs text-slate-400 mb-1">קלוריות</div><div className="text-2xl font-bold">{calories} <span className="text-sm font-normal text-slate-400">/ {targets.calories}</span></div><div className="h-1.5 w-full bg-slate-700 rounded-full mt-2 overflow-hidden"><div className="h-full bg-green-500" style={{width: `${Math.min((calories/targets.calories)*100, 100)}%`}}></div></div></div><div className="text-center border-r border-slate-700"><div className="text-xs text-slate-400 mb-1">חלבון</div><div className="text-2xl font-bold text-blue-400">{protein}g <span className="text-sm font-normal text-slate-400">/ {targets.protein}</span></div><div className="h-1.5 w-full bg-slate-700 rounded-full mt-2 overflow-hidden"><div className="h-full bg-blue-500" style={{width: `${Math.min((protein/targets.protein)*100, 100)}%`}}></div></div></div></div><div className="mt-4 flex items-center justify-between pt-4 border-t border-slate-700"><div className="flex items-center gap-2"><Droplets size={16} className="text-cyan-400" /><span className="text-sm">{water} מ"ל</span></div><button onClick={() => setWater(w => w + 200)} className="text-xs bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full hover:bg-cyan-500/30">+ כוס מים</button></div></Card>
+              <div><h3 className="font-bold text-slate-700 dark:text-slate-300 mb-3">תפריט יומי (סמן)</h3><div className="space-y-3">{OTTERMODE_MEALS.map(meal => { const isEaten = meals.some(m => m.id === meal.id); return (<div key={meal.id} onClick={() => handleToggleMeal(meal)} className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${isEaten ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}><div><div className={`font-bold text-sm ${isEaten ? 'text-green-800 dark:text-green-300 line-through' : 'text-slate-800 dark:text-white'}`}>{meal.name}</div><div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{meal.cal} קלוריות • {meal.prot}ג חלבון</div></div>{isEaten && <CheckCircle2 className="text-green-600" size={24} />}</div>); })}</div></div>
+          </div>
+      )}
+      {activeTab === 'weight' && (
+          <div className="space-y-6 animate-in fade-in">
+              <Card className="p-5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white"><div className="flex items-center gap-4"><Scale size={40} className="opacity-80" /><div><div className="text-cyan-100 text-sm">משקל נוכחי</div><div className="text-4xl font-bold">{currentWeight} <span className="text-xl font-normal">ק"ג</span></div></div><div className="mr-auto text-right"><div className="text-cyan-100 text-sm">יעד שבועי</div><div className="text-xl font-bold">+0.5 ק"ג</div></div></div></Card>
+              <div className="flex gap-2"><input type="number" placeholder="הכנס משקל (קג)" className="p-3 rounded-lg border flex-1 dark:bg-slate-800 dark:border-slate-600 dark:text-white" value={weightInput} onChange={e => setWeightInput(e.target.value)} /><Button onClick={handleAddWeight}>שמור</Button></div>
+              <div className="space-y-2">{[...weightLog].reverse().map(log => (<div key={log.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border dark:border-slate-700 rounded-lg"><span className="text-slate-600 dark:text-slate-300">{log.date}</span><div className="flex items-center gap-3"><span className="font-bold text-slate-800 dark:text-white">{log.weight} ק"ג</span><IconButton icon={Trash2} color="red" onClick={() => askConfirm("למחוק?", () => setWeightLog(weightLog.filter(w => w.id !== log.id)))} /></div></div>))}</div>
+          </div>
+      )}
+    </div>
+  );
 };
 
-// 4. WalletView (תיקון צבעים במצב בהיר)
+// 4. WalletView (עם תיקון תצוגה בארנק - טקסט לבן על רקע כהה תמיד)
 const WalletView = ({ transactions, setTransactions, askConfirm }) => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [form, setForm] = useState({ title: "", amount: "", type: "income", date: new Date().toISOString().slice(0, 10) });
@@ -567,8 +489,14 @@ const WalletView = ({ transactions, setTransactions, askConfirm }) => {
     const balance = income - expense;
     return (
         <div className="space-y-6">
-            {/* Fixed Wallet Card Colors */}
-            <Card className="p-6 bg-slate-900 text-white shadow-lg"><div className="text-slate-400 text-sm mb-1">יתרה כוללת</div><div className="text-4xl font-bold text-white">₪{balance.toLocaleString()}</div><div className="flex gap-4 mt-6"><div className="flex-1 bg-white/10 p-3 rounded-lg flex items-center gap-3"><div className="bg-green-500/20 p-2 rounded-full text-green-400"><ArrowDownLeft size={20} /></div><div><div className="text-xs text-slate-300">הכנסות</div><div className="font-bold">₪{income.toLocaleString()}</div></div></div><div className="flex-1 bg-white/10 p-3 rounded-lg flex items-center gap-3"><div className="bg-red-500/20 p-2 rounded-full text-red-400"><ArrowUpRight size={20} /></div><div><div className="text-xs text-slate-300">הוצאות</div><div className="font-bold">₪{expense.toLocaleString()}</div></div></div></div></Card>
+            <Card className="p-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-xl">
+                <div className="text-slate-400 text-sm mb-1">יתרה כוללת</div>
+                <div className={`text-4xl font-bold ${balance < 0 ? 'text-red-400' : 'text-white'}`}>₪{balance.toLocaleString()}</div>
+                <div className="flex gap-4 mt-6">
+                    <div className="flex-1 bg-white/10 p-3 rounded-lg flex items-center gap-3"><div className="bg-green-500/20 p-2 rounded-full text-green-400"><ArrowDownLeft size={20} /></div><div><div className="text-xs text-slate-300">הכנסות</div><div className="font-bold">₪{income.toLocaleString()}</div></div></div>
+                    <div className="flex-1 bg-white/10 p-3 rounded-lg flex items-center gap-3"><div className="bg-red-500/20 p-2 rounded-full text-red-400"><ArrowUpRight size={20} /></div><div><div className="text-xs text-slate-300">הוצאות</div><div className="font-bold">₪{expense.toLocaleString()}</div></div></div>
+                </div>
+            </Card>
             <div className="flex justify-between items-center"><h3 className="font-bold dark:text-white">תנועות אחרונות</h3><Button size="sm" onClick={() => setIsFormOpen(!isFormOpen)}>פעולה</Button></div>
             {isFormOpen && <Card className="p-4 bg-slate-100 dark:bg-slate-700"><div className="grid gap-3"><div className="flex gap-2"><button onClick={() => setForm({...form, type: 'income'})} className={`flex-1 py-2 rounded-lg text-sm font-bold ${form.type === 'income' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-white dark:bg-slate-600 dark:text-slate-300'}`}>הכנסה</button><button onClick={() => setForm({...form, type: 'expense'})} className={`flex-1 py-2 rounded-lg text-sm font-bold ${form.type === 'expense' ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-white dark:bg-slate-600 dark:text-slate-300'}`}>הוצאה</button></div><input placeholder="תיאור" className="p-2 rounded border dark:bg-slate-600 dark:text-white" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /><div className="flex gap-2"><input type="number" placeholder="סכום" className="p-2 rounded border w-1/2 dark:bg-slate-600 dark:text-white" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} /><input type="date" className="p-2 rounded border w-1/2 dark:bg-slate-600 dark:text-white" value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div><Button onClick={handleAdd}>שמור</Button></div></Card>}
             <div className="space-y-2">{transactions.map(t => (<div key={t.id} className="flex justify-between p-3 bg-white dark:bg-slate-800 rounded border dark:border-slate-700"><div><div className="font-bold dark:text-white">{t.title}</div><div className="text-xs text-slate-500">{t.date}</div></div><div className="flex items-center gap-2"><span className={`font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>{t.amount}₪</span><IconButton icon={Trash2} color="red" onClick={() => handleDelete(t.id)} /></div></div>))}</div>
@@ -576,29 +504,75 @@ const WalletView = ({ transactions, setTransactions, askConfirm }) => {
     );
 };
 
+// 5. Dashboard (עם Daily Feed!)
 const Dashboard = ({ changeTab, schedule, setSchedule, assignments, jobs, calories, protein, workouts, askConfirm, transactions, targets }) => {
+  const [viewMode, setViewMode] = useState('plan'); // 'plan' or 'feed'
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [formData, setFormData] = useState({ time: '08:00', title: '', day: new Date().getDay() });
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
   const daysOfWeek = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  
+  // Daily Feed Logic
+  const generateDailyFeed = () => {
+      const feed = [];
+      const today = new Date().toDateString();
+      transactions.filter(t => new Date(t.date).toDateString() === today).forEach(t => feed.push({ type: 'wallet', time: 'היום', ...t }));
+      schedule.filter(s => s.day === new Date().getDay() && s.done).forEach(s => feed.push({ type: 'task', time: s.time, title: s.title }));
+      workouts.filter(w => w.done && w.day === daysOfWeek[new Date().getDay()]).forEach(w => feed.push({ type: 'workout', time: 'היום', title: w.type }));
+      return feed;
+  };
+  const dailyFeed = generateDailyFeed();
+
   const handleAddEvent = () => { setSchedule([...schedule, { id: Date.now(), ...formData, done: false }].sort((a,b) => a.time.localeCompare(b.time))); setIsFormOpen(false); };
   const toggleScheduleItem = (id) => setSchedule(schedule.map(item => item.id === id ? { ...item, done: !item.done } : item));
   const dailySchedule = schedule.filter(item => (item.day !== undefined ? item.day : new Date().getDay()) === selectedDay);
+  
+  const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour >= 5 && hour < 12) return "בוקר טוב,";
+      if (hour >= 12 && hour < 18) return "צהריים טובים,";
+      if (hour >= 18 && hour < 22) return "ערב טוב,";
+      return "לילה טוב,";
+  };
+  const [quote] = useState("Believe you can and you're halfway there.");
+
   const pendingAssignments = assignments.filter(a => a.status === 'pending').length;
   const openJobs = jobs.filter(j => j.status === 'in_progress' || j.status === 'received').length;
-  const weeklyStats = { assignmentsCount: assignments.filter(a => a.status === 'done' && isInCurrentWeek(a.date)).length, jobsCount: jobs.filter(j => j.status === 'delivered' && isInCurrentWeek(j.date)).length, jobsIncome: jobs.filter(j => j.status === 'delivered' && isInCurrentWeek(j.date)).reduce((acc, j) => acc + (j.price || 0), 0), workoutsCount: workouts.filter(w => w.done).length, income: transactions.filter(t => isInCurrentWeek(t.date) && t.type === 'income').reduce((acc, t) => acc + t.amount, 0), expense: transactions.filter(t => isInCurrentWeek(t.date) && t.type === 'expense').reduce((acc, t) => acc + t.amount, 0) };
 
   return (
     <div className="space-y-6">
-      {isSummaryOpen && (<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in"><Card className="w-full max-w-sm p-0 bg-white dark:bg-slate-800 shadow-2xl relative"><div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white"><h2 className="text-2xl font-bold mb-1">סיכום שבועי</h2><button onClick={() => setIsSummaryOpen(false)} className="absolute top-4 left-4 p-2 bg-white/20 rounded-full hover:bg-white/30 text-white"><X size={20} /></button></div><div className="p-6 space-y-4"><div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div className="flex items-center gap-3"><CheckCircle2 className="text-green-600" /> <span className="dark:text-white">מטלות שבוצעו</span></div><span className="font-bold dark:text-white">{weeklyStats.assignmentsCount}</span></div><div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div className="flex items-center gap-3"><BookOpen className="text-purple-600" /> <div><div className="dark:text-white">כריכות</div><div className="text-xs text-slate-500">₪{weeklyStats.jobsIncome}</div></div></div><span className="font-bold dark:text-white">{weeklyStats.jobsCount}</span></div><div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg"><div className="flex items-center gap-3"><Dumbbell className="text-blue-600" /> <span className="dark:text-white">אימונים</span></div><span className="font-bold dark:text-white">{weeklyStats.workoutsCount}</span></div><div className="grid grid-cols-2 gap-4 border-t pt-4 dark:border-slate-700"><div className="text-center"><span className="text-green-600 text-xs">הכנסות</span><span className="block font-bold dark:text-white">₪{weeklyStats.income}</span></div><div className="text-center"><span className="text-red-600 text-xs">הוצאות</span><span className="block font-bold dark:text-white">₪{weeklyStats.expense}</span></div></div></div></Card></div>)}
-      <div className="bg-slate-800 dark:bg-slate-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden"><div className="relative z-10"><h1 className="text-2xl font-light">ברוך הבא</h1><Button onClick={() => setIsSummaryOpen(true)} variant="secondary" size="sm" className="bg-white/20 text-white hover:bg-white/30 border-none backdrop-blur-sm mt-4"><BarChart3 size={16} /> צפה בסיכום שבועי</Button></div></div>
-      <div className="grid grid-cols-2 gap-3"><div onClick={() => changeTab('uni')} className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl"><div className="font-bold dark:text-white">לימודים</div><div className="text-xs text-slate-500 dark:text-slate-400">{pendingAssignments} מטלות פתוחות</div></div><div onClick={() => changeTab('binding')} className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl"><div className="font-bold dark:text-white">כריכה</div><div className="text-xs text-slate-500 dark:text-slate-400">{openJobs} בהזמנה/עבודה</div></div><div onClick={() => changeTab('health')} className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl col-span-2"><div className="flex items-center gap-2 mb-3"><Dumbbell className="text-green-600 dark:text-green-400" size={20} /><div className="font-bold text-slate-800 dark:text-white">כושר ותזונה</div></div><div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide"><div className="flex-1 min-w-[100px] flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 p-2 rounded-lg"><Flame size={18} className="text-orange-500" /><div><div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">קלוריות</div><div className="text-sm font-bold text-slate-700 dark:text-white">{calories}/{targets.calories}</div></div></div><div className="flex-1 min-w-[100px] flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 p-2 rounded-lg"><Beef size={18} className="text-blue-500" /><div><div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">חלבון</div><div className="text-sm font-bold text-slate-700 dark:text-white">{protein}/{targets.protein}g</div></div></div></div></div></div>
+      <div className="bg-slate-800 dark:bg-slate-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden"><div className="relative z-10"><h1 className="text-2xl font-light">{getGreeting()}</h1><p className="text-lg opacity-80 mt-1" dir="ltr">{quote}</p></div></div>
+      <div className="grid grid-cols-2 gap-3"><div onClick={() => changeTab('uni')} className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl"><div className="font-bold dark:text-white">לימודים</div></div><div onClick={() => changeTab('binding')} className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-xl"><div className="font-bold dark:text-white">כריכה</div></div><div onClick={() => changeTab('health')} className="bg-green-50 dark:bg-green-900/20 p-4 rounded-xl col-span-2"><div className="flex items-center gap-2 mb-3"><Dumbbell className="text-green-600 dark:text-green-400" size={20} /><div className="font-bold text-slate-800 dark:text-white">Ottermode (PPL)</div></div><div className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide"><div className="flex-1 min-w-[100px] flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 p-2 rounded-lg"><Flame size={18} className="text-orange-500" /><div><div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">קלוריות</div><div className="text-sm font-bold text-slate-700 dark:text-white">{calories}/{targets.calories}</div></div></div><div className="flex-1 min-w-[100px] flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 p-2 rounded-lg"><Beef size={18} className="text-blue-500" /><div><div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">חלבון</div><div className="text-sm font-bold text-slate-700 dark:text-white">{protein}/{targets.protein}g</div></div></div></div></div></div>
+      
       <div>
-        <div className="flex justify-between items-center mb-2"><h3 className="font-bold dark:text-white">לו"ז שבועי</h3><Button size="sm" variant="secondary" onClick={() => setIsFormOpen(!isFormOpen)}><Plus size={16} /></Button></div>
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-4">{daysOfWeek.map((day, index) => (<button key={index} onClick={() => setSelectedDay(index)} className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${selectedDay === index ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500'}`}>{day}</button>))}</div>
-        {isFormOpen && <Card className="p-4 bg-slate-50 dark:bg-slate-800 mb-4"><div className="grid gap-3"><select className="p-2 rounded border dark:bg-slate-700 dark:text-white" value={formData.day} onChange={e => setFormData({...formData, day: parseInt(e.target.value)})}>{daysOfWeek.map((d, i) => <option key={i} value={i}>{d}</option>)}</select><input type="time" className="p-2 rounded border dark:bg-slate-700 dark:text-white" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} /><input placeholder="משימה" className="p-2 rounded border dark:bg-slate-700 dark:text-white" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /><Button onClick={handleAddEvent}>הוסף</Button></div></Card>}
-        <div className="space-y-2">{dailySchedule.map(item => (<div key={item.id} className="flex gap-3 items-center p-3 bg-white dark:bg-slate-800 rounded border dark:border-slate-700"><span className="text-xs font-bold text-slate-500 w-10">{item.time}</span><span className={`flex-1 ${item.done ? 'line-through text-slate-400' : 'dark:text-white'}`}>{item.title}</span><input type="checkbox" checked={item.done} onChange={() => toggleScheduleItem(item.id)} /></div>))}</div>
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-4">
+            <button onClick={() => setViewMode('plan')} className={`flex-1 py-1.5 text-sm rounded-md transition-all ${viewMode === 'plan' ? 'bg-white dark:bg-slate-600 shadow' : 'text-slate-500'}`}>תכנון לו"ז</button>
+            <button onClick={() => setViewMode('feed')} className={`flex-1 py-1.5 text-sm rounded-md transition-all ${viewMode === 'feed' ? 'bg-white dark:bg-slate-600 shadow' : 'text-slate-500'}`}>היום שהיה</button>
+        </div>
+
+        {viewMode === 'plan' ? (
+            <>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-4">{daysOfWeek.map((day, index) => (<button key={index} onClick={() => setSelectedDay(index)} className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${selectedDay === index ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500'}`}>{day}</button>))}</div>
+                <div className="flex justify-between items-center mb-2"><h3 className="font-bold dark:text-white">משימות</h3><Button size="sm" variant="secondary" onClick={() => setIsFormOpen(!isFormOpen)}><Plus size={16} /></Button></div>
+                {isFormOpen && <Card className="p-4 bg-slate-50 dark:bg-slate-800 mb-4"><div className="grid gap-3"><select className="p-2 rounded border dark:bg-slate-700 dark:text-white" value={formData.day} onChange={e => setFormData({...formData, day: parseInt(e.target.value)})}>{daysOfWeek.map((d, i) => <option key={i} value={i}>{d}</option>)}</select><input type="time" className="p-2 rounded border dark:bg-slate-700 dark:text-white" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} /><input placeholder="משימה" className="p-2 rounded border dark:bg-slate-700 dark:text-white" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /><Button onClick={handleAddEvent}>הוסף</Button></div></Card>}
+                <div className="space-y-2">{dailySchedule.map(item => (<div key={item.id} className="flex gap-3 items-center p-3 bg-white dark:bg-slate-800 rounded border dark:border-slate-700"><span className="text-xs font-bold text-slate-500 w-10">{item.time}</span><span className={`flex-1 ${item.done ? 'line-through text-slate-400' : 'dark:text-white'}`}>{item.title}</span><input type="checkbox" checked={item.done} onChange={() => toggleScheduleItem(item.id)} /></div>))}</div>
+            </>
+        ) : (
+            <div className="space-y-4 relative pl-4 border-l-2 border-slate-200 dark:border-slate-700 ml-2 py-2">
+                {dailyFeed.length === 0 && <div className="text-sm text-slate-400 italic">עדיין לא נרשמה פעילות היום.</div>}
+                {dailyFeed.map((item, i) => (
+                    <div key={i} className="relative mb-6 last:mb-0">
+                        <div className="absolute -left-[25px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-white dark:border-slate-900"></div>
+                        <div className="text-xs text-slate-400 mb-1">{item.time}</div>
+                        <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border dark:border-slate-700 shadow-sm">
+                            <div className="font-bold text-slate-800 dark:text-white">{item.title}</div>
+                            {item.type === 'wallet' && <div className="text-xs text-green-600">פעולה בארנק: {item.amount}₪</div>}
+                            {item.type === 'workout' && <div className="text-xs text-blue-600">אימון הושלם!</div>}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
       </div>
     </div>
   );
@@ -627,7 +601,8 @@ export default function App() {
   const [meals, setMeals] = useStickyState([], 'meals');
   const [schedule, setSchedule] = useStickyState([], 'schedule');
   const [transactions, setTransactions] = useStickyState([], 'transactions');
-  const [targets, setTargets] = useStickyState({ calories: 2500, protein: 150, water: 2500 }, 'targets');
+  // Updated Targets for Ottermode
+  const [targets, setTargets] = useStickyState({ calories: 3000, protein: 160, water: 3000 }, 'targets');
   const [lastResetDate, setLastResetDate] = useStickyState(new Date().toDateString(), 'lastResetDate');
 
   useEffect(() => {
@@ -667,7 +642,7 @@ export default function App() {
     <div className={`min-h-screen font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-800'}`} dir="rtl">
       <ConfirmModal isOpen={confirmState.isOpen} text={confirmState.text} onConfirm={confirmState.onConfirm} onCancel={() => setConfirmState({ isOpen: false, text: "", onConfirm: null })} />
       <header className={`sticky top-0 z-20 shadow-sm px-4 py-3 flex items-center justify-between transition-colors ${darkMode ? 'bg-slate-800 border-b border-slate-700' : 'bg-white'}`}>
-         <div className="flex items-center gap-3">{activeTab !== 'dashboard' && <button onClick={() => setActiveTab('dashboard')} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><ChevronLeft /></button>}<h1 className="font-bold text-lg">{activeTab === 'dashboard' ? 'סקירה יומית' : activeTab === 'uni' ? 'לימודים' : activeTab === 'binding' ? 'כריכה' : activeTab === 'health' ? 'בריאות' : activeTab === 'wallet' ? 'ארנק' : 'הגדרות'}</h1></div>
+         <div className="flex items-center gap-3">{activeTab !== 'dashboard' && <button onClick={() => setActiveTab('dashboard')} className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700"><ChevronLeft /></button>}<h1 className="font-bold text-lg">{activeTab === 'dashboard' ? 'סקירה יומית' : activeTab === 'uni' ? 'לימודים' : activeTab === 'binding' ? 'כריכה' : activeTab === 'health' ? 'Ottermode' : activeTab === 'wallet' ? 'ארנק' : 'הגדרות'}</h1></div>
          <div className="flex gap-3 items-center"><button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300">{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button><button onClick={() => setActiveTab('settings')} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300"><Settings size={20} /></button><div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-300 dark:border-slate-600"><img src="/api/placeholder/32/32" alt="Profile" className="w-full h-full object-cover" /></div></div>
       </header>
       <main className="p-4 pb-24 max-w-lg mx-auto">{renderContent()}</main>
